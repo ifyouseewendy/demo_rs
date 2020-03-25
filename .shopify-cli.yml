@@ -1,0 +1,5 @@
+---
+project_type: :script
+extension_point_type: discount_rs
+script_name: discount_rs
+language: rs
