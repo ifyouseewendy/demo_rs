@@ -1,0 +1,7 @@
+{
+  "input": {
+	  "v_str": "hello",
+	  "v_slice": [1,2,3],
+	  "v_int": 1
+  }
+}
