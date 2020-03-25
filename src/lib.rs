@@ -1,35 +1,32 @@
+use std::boxed::Box;
 mod meta;
 
 #[repr(C)]
 pub struct LineItem {
-	id: String,
+	id: i32,
 }
 
 #[repr(C)]
 pub struct DiscountCode {
-	id: String,
+	id: i32,
 }
 
 #[repr(C)]
 pub struct Customer {
 	id: u64,
-	email: String,
-	tags: Vec<String>,
 }
 
 #[repr(C)]
-pub struct Checkout {
-	line_items: Vec<LineItem>,
-	discount_codes: Vec<DiscountCode>,
-	customer: Option<Customer>,
+pub struct Checkout<'a> {
+	line_items: &'a MySlice<'a, LineItem>,
+	discount_codes: &'a MySlice<'a, DiscountCode>,
+	customer: Option<&'a Customer>,
 }
 
 #[repr(C)]
-#[derive(Debug)]
+#[derive(Copy, Clone)]
 pub struct Discount {
-	line_item_id: String,
-	value: i32,
-	title: String,
+	id: i32,
 }
 
 #[repr(C)]
@@ -39,14 +36,24 @@ pub struct Input<'a> {
 	v_int: i32,
 }
 
+#[repr(C)]
 pub struct MySlice<'a, T> {
 	p: &'a T,
 	len: u32,
 }
 
 #[no_mangle]
-pub extern "C" fn run(input: &Input) -> u32 {
-	input.v_slice.len
+// pub extern "C" fn run<'a>(input: &'a Checkout) -> &'a MySlice<'a, Discount> {
+pub extern "C" fn run<'a>(
+	input: &'a Checkout,
+) -> &'a MySlice<'a, &'a Discount> {
+	let discounts =
+		vec![&Discount { id: 2 }, &Discount { id: 2 }].into_boxed_slice();
+
+	let p: &'a mut [&Discount] = Box::leak(discounts);
+
+	let b = Box::new(MySlice { p: &p[0], len: 2 });
+	Box::leak(b)
 }
 
 #[cfg(test)]
