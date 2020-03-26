@@ -30,6 +30,12 @@ pub struct Discount<'a> {
 	v_str: &'a MySlice<'a, u8>,
 }
 
+// impl<'a> Discount<'a> {
+// 	pub fn new(id: i32, v_str: &str) _{
+// 		Box::new(Discount { id, v_str: v_str.to_owned() })
+// 	}
+// }
+
 #[repr(C)]
 pub struct Input<'a> {
 	v_str: &'a MySlice<'a, &'a str>,
@@ -47,18 +53,32 @@ pub struct MySlice<'a, T> {
 pub extern "C" fn run<'a>(
 	input: &'a Checkout,
 ) -> &'a MySlice<'a, &'a Discount<'a>> {
-	let chars = "hello".bytes().collect::<Vec<u8>>().into_boxed_slice();
+	let v_str = wrap_string("hello");
+	transform(vec![Box::new(Discount { id: 2, v_str })])
+}
+
+fn transform<'a>(
+	v: Vec<Box<Discount<'a>>>,
+) -> &'a MySlice<'a, &'a Discount<'a>> {
+	let vs = v
+		.into_iter()
+		.map(|b| &*Box::leak(b))
+		.collect::<Vec<&Discount<'a>>>();
+	wrap_slice(&vs)
+}
+
+fn wrap_slice<'a, T: Clone>(v: &[T]) -> &'a MySlice<'a, T> {
+	let len = v.len() as u32;
+	let p: &'a [T] = Box::leak(v.to_vec().into_boxed_slice());
+	let b = Box::new(MySlice { p: &p[0], len });
+	Box::leak(b)
+}
+
+fn wrap_string<'a>(s: &'a str) -> &'a MySlice<'a, u8> {
+	let len = s.bytes().len() as u32;
+	let chars = s.bytes().collect::<Vec<u8>>().into_boxed_slice();
 	let c: &'a mut [u8] = Box::leak(chars);
-	let b = Box::new(MySlice { p: &c[0], len: 5 });
-	let v_str: &'a MySlice<'a, u8> = Box::leak(b);
-
-	let d: &'a Discount = Box::leak(Box::new(Discount { id: 2, v_str }));
-
-	let discounts = vec![d].into_boxed_slice();
-
-	let p: &'a mut [&Discount] = Box::leak(discounts);
-
-	let b = Box::new(MySlice { p: &p[0], len: 1 });
+	let b = Box::new(MySlice { p: &c[0], len });
 	Box::leak(b)
 }
 
