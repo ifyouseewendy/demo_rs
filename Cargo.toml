@@ -1,5 +1,5 @@
 [package]
-name = "discount_rs"
+name = "demo_rs"
 version = "0.1.0"
 authors = ["Script Author <script.author@mail.com>"]
 edition = "2018"

@@ -2,7 +2,6 @@ use std::boxed::Box;
 mod meta;
 
 /// Core structure which is bound to our memory layout
-/// https://github.com/Shopify/runtime-engine/wiki/Memory-Layout
 #[repr(C)]
 pub struct MySlice<T: 'static> {
 	p: &'static T,
@@ -84,25 +83,3 @@ fn wrap_string(s: &str) -> &'static MySlice<u8> {
 fn wrap_value<T>(v: T) -> &'static T {
 	Box::leak(Box::new(v))
 }
-
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
-//
-// 	#[test]
-// 	fn test_run() {
-// 		let line_items: Vec<LineItem> = vec![];
-// 		let customer = Customer {
-// 			id: 1,
-// 			email: "di@example.com".to_owned(),
-// 			tags: Vec::new(),
-// 		};
-// 		let discount_codes: Vec<DiscountCode> = Vec::new();
-// 		let input = Checkout {
-// 			line_items,
-// 			discount_codes,
-// 			customer: Some(customer),
-// 		};
-// 		assert_eq!(run(&input).len(), 0);
-// 	}
-// }
