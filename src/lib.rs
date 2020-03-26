@@ -9,11 +9,28 @@ pub struct MySlice<T: 'static> {
 	len: u32,
 }
 
+impl<T: Clone> MySlice<T> {
+	fn to_vec(&self) -> Vec<T> {
+		let raw_p = self.p as *const _;
+		let len = self.len as usize;
+		let slice = unsafe { std::slice::from_raw_parts(raw_p, len) };
+		slice.to_vec()
+	}
+}
+
+impl MySlice<u8> {
+	fn to_string(&self) -> String {
+		String::from_utf8_lossy(&self.to_vec()).to_string()
+	}
+}
+
 #[repr(C)]
 pub struct Input<'a> {
 	v_int: i32,
 	v_str: &'a MySlice<u8>,
 	v_slice: &'a MySlice<i32>,
+	v_struct: &'static User,
+	v_slice_of_struct: &'static MySlice<&'static User>,
 }
 
 #[repr(C)]
@@ -28,34 +45,26 @@ pub struct Output {
 	v_str: &'static MySlice<u8>,
 	v_slice: &'static MySlice<i32>,
 	v_struct: &'static User,
+	v_slice_of_struct: &'static MySlice<&'static User>,
 }
 
 #[no_mangle]
 pub extern "C" fn run<'a>(input: &'a Input) -> &'static Output {
-	let v_int = 42;
-	let v_str = wrap_string("hello world");
-	let v_slice = wrap_slice(&vec![1, 2, 3]);
+	let v_int = input.v_int;
+	let v_str = wrap_string(&input.v_str.to_string());
+	let v_slice = wrap_slice(&input.v_slice.to_vec());
 
-	let age = 18;
-	let name = wrap_string("Di");
-	let v_struct = wrap_value(User { age, name });
+	let v_struct = input.v_struct;
+	let v_struct = wrap_value(v_struct);
+	let v_slice_of_struct = wrap_slice(&input.v_slice_of_struct.to_vec());
 	wrap_value(Output {
 		v_int,
 		v_str,
 		v_slice,
 		v_struct,
+		v_slice_of_struct,
 	})
 }
-
-// fn transform<'a>(
-// 	v: Vec<Box<Discount<'a>>>,
-// ) -> &'a MySlice<'a, &'a Discount<'a>> {
-// 	let vs = v
-// 		.into_iter()
-// 		.map(|b| &*Box::leak(b))
-// 		.collect::<Vec<&Discount<'a>>>();
-// 	wrap_slice(&vs)
-// }
 
 fn wrap_slice<T: Clone>(v: &[T]) -> &'static MySlice<T> {
 	let len = v.len() as u32;
@@ -76,24 +85,24 @@ fn wrap_value<T>(v: T) -> &'static T {
 	Box::leak(Box::new(v))
 }
 
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn test_run() {
-		let line_items: Vec<LineItem> = vec![];
-		let customer = Customer {
-			id: 1,
-			email: "di@example.com".to_owned(),
-			tags: Vec::new(),
-		};
-		let discount_codes: Vec<DiscountCode> = Vec::new();
-		let input = Checkout {
-			line_items,
-			discount_codes,
-			customer: Some(customer),
-		};
-		assert_eq!(run(&input).len(), 0);
-	}
-}
+// #[cfg(test)]
+// mod tests {
+// 	use super::*;
+//
+// 	#[test]
+// 	fn test_run() {
+// 		let line_items: Vec<LineItem> = vec![];
+// 		let customer = Customer {
+// 			id: 1,
+// 			email: "di@example.com".to_owned(),
+// 			tags: Vec::new(),
+// 		};
+// 		let discount_codes: Vec<DiscountCode> = Vec::new();
+// 		let input = Checkout {
+// 			line_items,
+// 			discount_codes,
+// 			customer: Some(customer),
+// 		};
+// 		assert_eq!(run(&input).len(), 0);
+// 	}
+// }

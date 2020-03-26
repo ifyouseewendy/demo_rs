@@ -1,7 +1,16 @@
 {
   "input": {
 	  "v_int": 42,
-	  "v_str": "hello world",
-	  "v_slice": [1, 2, 3]
+	  "v_str": "good morning",
+	  "v_slice": [1, 3, 5],
+	  "v_struct": {
+		  "age": 18,
+		  "name": "Di"
+	  },
+	  "v_slice_of_struct": [
+		  { "age": 1, "name": "A" },
+		  { "age": 2, "name": "B" },
+		  { "age": 3, "name": "C" }
+	  ]
   }
 }

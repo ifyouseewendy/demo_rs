@@ -1,0 +1,26 @@
+input User {
+	age: Int!
+	name: String!
+}
+input Input {
+	v_int: Int!
+	v_str: String!
+	v_slice: [Int!]!
+	v_struct: User!
+	v_slice_of_struct: [User!]!
+}
+input Output {
+	v_int: Int!
+	v_str: String!
+	v_slice: [Int!]!
+	v_struct: User!
+	v_slice_of_struct: [User!]!
+}
+
+# Currently, this query must be called run and accept a single top level argument 'input' with
+# content provided by your EP
+type Query {
+	run(input: Input!): Output!
+}
+
+schema { query: Query }
