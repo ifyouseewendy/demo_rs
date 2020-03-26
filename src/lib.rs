@@ -1,71 +1,49 @@
 use std::boxed::Box;
 mod meta;
 
-#[repr(C)]
-pub struct LineItem {
-	id: i32,
-}
-
-#[repr(C)]
-pub struct DiscountCode {
-	id: i32,
-}
-
-#[repr(C)]
-pub struct Customer {
-	id: u64,
-}
-
-#[repr(C)]
-pub struct Checkout<'a> {
-	line_items: &'a MySlice<'a, LineItem>,
-	discount_codes: &'a MySlice<'a, DiscountCode>,
-	customer: Option<&'a Customer>,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct Discount<'a> {
-	id: i32,
-	v_str: &'a MySlice<'a, u8>,
-}
-
-// impl<'a> Discount<'a> {
-// 	pub fn new(id: i32, v_str: &str) _{
-// 		Box::new(Discount { id, v_str: v_str.to_owned() })
-// 	}
-// }
-
-#[repr(C)]
-pub struct Input<'a> {
-	v_str: &'a MySlice<'a, &'a str>,
-	v_slice: &'a MySlice<'a, i32>,
-	v_int: i32,
-}
-
+/// Core structure which is bound to our memory layout
+/// https://github.com/Shopify/runtime-engine/wiki/Memory-Layout
 #[repr(C)]
 pub struct MySlice<'a, T> {
 	p: &'a T,
 	len: u32,
 }
 
-#[no_mangle]
-pub extern "C" fn run<'a>(
-	input: &'a Checkout,
-) -> &'a MySlice<'a, &'a Discount<'a>> {
-	let v_str = wrap_string("hello");
-	transform(vec![Box::new(Discount { id: 2, v_str })])
+#[repr(C)]
+pub struct Input<'a> {
+	v_int: i32,
+	v_str: &'a MySlice<'a, u8>,
+	v_slice: &'a MySlice<'a, i32>,
 }
 
-fn transform<'a>(
-	v: Vec<Box<Discount<'a>>>,
-) -> &'a MySlice<'a, &'a Discount<'a>> {
-	let vs = v
-		.into_iter()
-		.map(|b| &*Box::leak(b))
-		.collect::<Vec<&Discount<'a>>>();
-	wrap_slice(&vs)
+#[repr(C)]
+pub struct Output<'a> {
+	v_int: i32,
+	v_str: &'a MySlice<'a, u8>,
+	v_slice: &'a MySlice<'a, i32>,
 }
+
+#[no_mangle]
+pub extern "C" fn run<'a>(input: &'a Input) -> &'a Output<'a> {
+	let v_int = 42;
+	let v_str = wrap_string("hello world");
+	let v_slice = wrap_slice(&vec![1, 2, 3]);
+	Box::leak(Box::new(Output {
+		v_int,
+		v_str,
+		v_slice,
+	}))
+}
+
+// fn transform<'a>(
+// 	v: Vec<Box<Discount<'a>>>,
+// ) -> &'a MySlice<'a, &'a Discount<'a>> {
+// 	let vs = v
+// 		.into_iter()
+// 		.map(|b| &*Box::leak(b))
+// 		.collect::<Vec<&Discount<'a>>>();
+// 	wrap_slice(&vs)
+// }
 
 fn wrap_slice<'a, T: Clone>(v: &[T]) -> &'a MySlice<'a, T> {
 	let len = v.len() as u32;
