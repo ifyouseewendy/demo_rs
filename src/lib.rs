@@ -25,8 +25,9 @@ pub struct Checkout<'a> {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct Discount {
+pub struct Discount<'a> {
 	id: i32,
+	v_str: &'a MySlice<'a, u8>,
 }
 
 #[repr(C)]
@@ -43,16 +44,21 @@ pub struct MySlice<'a, T> {
 }
 
 #[no_mangle]
-// pub extern "C" fn run<'a>(input: &'a Checkout) -> &'a MySlice<'a, Discount> {
 pub extern "C" fn run<'a>(
 	input: &'a Checkout,
-) -> &'a MySlice<'a, &'a Discount> {
-	let discounts =
-		vec![&Discount { id: 2 }, &Discount { id: 2 }].into_boxed_slice();
+) -> &'a MySlice<'a, &'a Discount<'a>> {
+	let chars = "hello".bytes().collect::<Vec<u8>>().into_boxed_slice();
+	let c: &'a mut [u8] = Box::leak(chars);
+	let b = Box::new(MySlice { p: &c[0], len: 5 });
+	let v_str: &'a MySlice<'a, u8> = Box::leak(b);
+
+	let d: &'a Discount = Box::leak(Box::new(Discount { id: 2, v_str }));
+
+	let discounts = vec![d].into_boxed_slice();
 
 	let p: &'a mut [&Discount] = Box::leak(discounts);
 
-	let b = Box::new(MySlice { p: &p[0], len: 2 });
+	let b = Box::new(MySlice { p: &p[0], len: 1 });
 	Box::leak(b)
 }
 
